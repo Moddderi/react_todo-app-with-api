@@ -193,7 +193,11 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleUpdateTodo = async (todoId: number, title: string) => {
+  const handleUpdateTodo = async (
+    todoId: number,
+    title: string,
+    setEditing: React.Dispatch<React.SetStateAction<boolean>>,
+  ) => {
     setUpdatingTodoIds(prev => [...prev, todoId]);
     setError(null);
 
@@ -201,6 +205,8 @@ export const App: React.FC = () => {
       const updated = await updateTodo(todoId, { title });
 
       setTodos(prev => prev.map(t => (t.id === todoId ? updated : t)));
+
+      setEditing(false);
     } catch {
       setError(ErrorType.UNABLE_TO_UPDATE_TODO);
     } finally {

@@ -9,7 +9,11 @@ type Props = {
   tempTodo: Todo | null;
   onDelete: (id: number) => void;
   onToggle: (id: number) => void;
-  onUpdate: (id: number, title: string) => Promise<void>;
+  onUpdate: (
+    id: number,
+    title: string,
+    setEditing: React.Dispatch<React.SetStateAction<boolean>>,
+  ) => Promise<void>;
   deletingTodoIds: number[];
   updatingTodoIds: number[];
 };
@@ -33,7 +37,9 @@ export const TodoList: React.FC<Props> = ({
           isUpdating={updatingTodoIds.includes(todo.id)}
           onDelete={onDelete}
           onToggle={onToggle}
-          onUpdate={onUpdate}
+          onUpdate={async (id, title, setEditing) => {
+            await onUpdate(id, title, setEditing);
+          }}
         />
       ))}
 

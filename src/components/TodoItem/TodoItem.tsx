@@ -9,7 +9,11 @@ type Props = {
   isUpdating: boolean;
   onDelete: (id: number) => void;
   onToggle: (id: number) => void;
-  onUpdate: (id: number, title: string) => Promise<void>;
+  onUpdate: (
+    id: number,
+    title: string,
+    setEditing: React.Dispatch<React.SetStateAction<boolean>>,
+  ) => Promise<void>;
   isTemp?: boolean;
 };
 
@@ -31,12 +35,28 @@ export const TodoItem: React.FC<Props> = ({
 
     if (!trimmed) {
       onDelete(todo.id);
-    } else if (trimmed !== todo.title) {
-      await onUpdate(todo.id, trimmed);
+
+      return;
     }
 
-    setIsEditing(false);
+    if (trimmed !== todo.title) {
+      await onUpdate(todo.id, trimmed, setIsEditing);
+    } else {
+      setIsEditing(false);
+    }
   };
+
+  const startEditing = () => {
+    setEditingTitle(todo.title);
+    setIsEditing(true);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  };
+
+  useEffect(() => {
+    if (isEditing) {
+      inputRef.current?.focus();
+    }
+  }, [isEditing]);
 
   const handleKeyUp = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -48,18 +68,6 @@ export const TodoItem: React.FC<Props> = ({
       setIsEditing(false);
     }
   };
-
-  const startEditing = () => {
-    setEditingTitle(todo.title);
-    setIsEditing(true);
-    setTimeout(() => inputRef.current?.focus(), 0); // гарантируем появление input перед фокусом
-  };
-
-  useEffect(() => {
-    if (isEditing) {
-      inputRef.current?.focus();
-    }
-  }, [isEditing]);
 
   return (
     <div
@@ -87,7 +95,7 @@ export const TodoItem: React.FC<Props> = ({
           onChange={e => setEditingTitle(e.target.value)}
           onBlur={handleSave}
           onKeyUp={handleKeyUp}
-          autoFocus // гарантируем, что input сразу в фокусе
+          autoFocus
         />
       ) : (
         <>
