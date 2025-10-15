@@ -174,6 +174,40 @@ export const App: React.FC = () => {
     inputRef.current?.focus();
   };
 
+  const handleToggleAll = async () => {
+    const next = !todos.every(t => t.completed);
+    const todosToUpdate = todos.filter(t => t.completed !== next);
+
+    for (const todo of todosToUpdate) {
+      setUpdatingTodoIds(prev => [...prev, todo.id]);
+
+      try {
+        const updated = await updateTodo(todo.id, { completed: next });
+
+        setTodos(prev => prev.map(t => (t.id === todo.id ? updated : t)));
+      } catch {
+        setError(ErrorType.UNABLE_TO_UPDATE_TODO);
+      } finally {
+        setUpdatingTodoIds(prev => prev.filter(id => id !== todo.id));
+      }
+    }
+  };
+
+  const handleUpdateTodo = async (todoId: number, title: string) => {
+    setUpdatingTodoIds(prev => [...prev, todoId]);
+    setError(null);
+
+    try {
+      const updated = await updateTodo(todoId, { title });
+
+      setTodos(prev => prev.map(t => (t.id === todoId ? updated : t)));
+    } catch {
+      setError(ErrorType.UNABLE_TO_UPDATE_TODO);
+    } finally {
+      setUpdatingTodoIds(prev => prev.filter(id => id !== todoId));
+    }
+  };
+
   if (!USER_ID) {
     return <UserWarning />;
   }
@@ -189,6 +223,9 @@ export const App: React.FC = () => {
           onAdd={handleAddTodo}
           inputRef={inputRef}
           disabled={!!tempTodo}
+          hasTodos={todos.length > 0}
+          allCompleted={todos.every(t => t.completed)}
+          onToggleAll={handleToggleAll}
         />
 
         <TodoList
@@ -196,6 +233,7 @@ export const App: React.FC = () => {
           tempTodo={tempTodo}
           onDelete={handleDeleteTodo}
           onToggle={handleToggleTodo}
+          onUpdate={handleUpdateTodo}
           deletingTodoIds={deletingTodoIds}
           updatingTodoIds={updatingTodoIds}
         />

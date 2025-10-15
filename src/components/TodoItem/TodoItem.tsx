@@ -1,6 +1,6 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 /* eslint-disable jsx-a11y/control-has-associated-label */
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Todo } from '../../types/Todo';
 
 type Props = {
@@ -9,6 +9,7 @@ type Props = {
   isUpdating: boolean;
   onDelete: (id: number) => void;
   onToggle: (id: number) => void;
+  onUpdate: (id: number, title: string) => Promise<void>;
   isTemp?: boolean;
 };
 
@@ -18,8 +19,48 @@ export const TodoItem: React.FC<Props> = ({
   isUpdating,
   onDelete,
   onToggle,
+  onUpdate,
   isTemp = false,
 }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingTitle, setEditingTitle] = useState(todo.title);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleSave = async () => {
+    const trimmed = editingTitle.trim();
+
+    if (!trimmed) {
+      onDelete(todo.id);
+    } else if (trimmed !== todo.title) {
+      await onUpdate(todo.id, trimmed);
+    }
+
+    setIsEditing(false);
+  };
+
+  const handleKeyUp = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSave();
+    }
+
+    if (e.key === 'Escape') {
+      setEditingTitle(todo.title);
+      setIsEditing(false);
+    }
+  };
+
+  const startEditing = () => {
+    setEditingTitle(todo.title);
+    setIsEditing(true);
+    setTimeout(() => inputRef.current?.focus(), 0); // гарантируем появление input перед фокусом
+  };
+
+  useEffect(() => {
+    if (isEditing) {
+      inputRef.current?.focus();
+    }
+  }, [isEditing]);
+
   return (
     <div
       key={todo.id}
@@ -37,20 +78,38 @@ export const TodoItem: React.FC<Props> = ({
         />
       </label>
 
-      <span className="todo__title" data-cy="TodoTitle">
-        {todo.title}
-      </span>
-
-      {!isTemp && (
-        <button
-          type="button"
-          className="todo__remove"
-          data-cy="TodoDelete"
-          onClick={() => onDelete(todo.id)}
-          disabled={isDeleting}
-        >
-          ×
-        </button>
+      {isEditing ? (
+        <input
+          ref={inputRef}
+          className="todo__edit"
+          value={editingTitle}
+          data-cy="TodoTitleField"
+          onChange={e => setEditingTitle(e.target.value)}
+          onBlur={handleSave}
+          onKeyUp={handleKeyUp}
+          autoFocus // гарантируем, что input сразу в фокусе
+        />
+      ) : (
+        <>
+          <span
+            className="todo__title"
+            data-cy="TodoTitle"
+            onDoubleClick={startEditing}
+          >
+            {todo.title}
+          </span>
+          {!isTemp && (
+            <button
+              type="button"
+              className="todo__remove"
+              data-cy="TodoDelete"
+              onClick={() => onDelete(todo.id)}
+              disabled={isDeleting}
+            >
+              ×
+            </button>
+          )}
+        </>
       )}
 
       <div

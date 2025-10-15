@@ -6,6 +6,9 @@ type Props = {
   onAdd: (event: React.FormEvent) => void;
   disabled?: boolean;
   inputRef: React.RefObject<HTMLInputElement>;
+  hasTodos: boolean; // if 1 todo
+  allCompleted: boolean;
+  onToggleAll: () => void;
 };
 
 export const Header: React.FC<Props> = ({
@@ -14,10 +17,20 @@ export const Header: React.FC<Props> = ({
   onAdd,
   disabled,
   inputRef,
+  hasTodos,
+  allCompleted,
+  onToggleAll,
 }) => {
   return (
     <header className="todoapp__header">
-      <button type="button" className="todoapp__toggle-all active" />
+      {hasTodos && (
+        <button
+          type="button"
+          data-cy="ToggleAllButton"
+          className={`todoapp__toggle-all${allCompleted ? ' active' : ''}`}
+          onClick={onToggleAll}
+        />
+      )}
       <form onSubmit={onAdd}>
         <input
           data-cy="NewTodoField"
